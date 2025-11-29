@@ -15,6 +15,9 @@ REM --- Перезапуск контейнеров ---
 docker-compose down
 docker-compose up --build -d
 
+REM --- Ожидание перед открытием браузера ---
+timeout /t 6 >nul
+
 REM --- Открытие браузера ---
 start http://localhost:3000/catalog
 
