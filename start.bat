@@ -16,6 +16,6 @@ docker-compose down
 docker-compose up --build -d
 
 REM --- Открытие браузера ---
-start http://localhost:3000
+start http://localhost:3000/catalog
 
 exit
