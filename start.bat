@@ -20,7 +20,7 @@ timeout /t 6 >nul
 
 
 REM --- Открытие браузера ---
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" http://localhost:3000/catalog
+start  http://localhost:3000/catalog
 
 REM Подождать 2 секунды пока окно откроется
 timeout /t 2 >nul
