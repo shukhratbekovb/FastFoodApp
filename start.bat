@@ -1,7 +1,7 @@
 @echo off
 
 REM --- Запуск Docker Desktop ---
-start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+net start com.docker.service >nul 2>&1
 
 REM --- Ожидание старта Docker Engine ---
 :wait
