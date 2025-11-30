@@ -10,7 +10,7 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 REM --- Перезапуск контейнеров ---
-docker-compose up --build -d
+docker-compose up -d
 
 REM --- Ожидание перед открытием браузера ---
 timeout /t 6 >nul
