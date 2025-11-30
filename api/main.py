@@ -2,7 +2,7 @@ from escpos.printer import Network
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from schemas import PrintSchema
+from schemas import PrintSchema, LargePrintSchema
 
 from printer import print_receipt
 
@@ -26,6 +26,12 @@ async def print_check(
 ):
     print_receipt(p, request, "client")
     print_receipt(p, request, "kitchen")
+
+@app.post("/print/report")
+async def print_report(
+        request: LargePrintSchema
+):
+    print_receipt(p, request, "internal")
 
 
 if __name__ == "__main__":
