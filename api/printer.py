@@ -1,7 +1,10 @@
+import pytz
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 
 from schemas import PrintSchema
+
+TIMEZONE = pytz.timezone("Asia/Tashkent")
 
 WIDTH = 570  # 80mm
 PADDING = 25
@@ -31,7 +34,7 @@ def generate_receipt(request, mode="client"):
     mode = "internal" -> ВНУТРЕННИЙ УЧЕТ (LargePrintSchema)
     """
 
-    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    date_str = datetime.now(tz=TIMEZONE).strftime("%Y-%m-%d %H:%M")
 
     img = Image.new("L", (WIDTH, 2000), 255)
     draw = ImageDraw.Draw(img)
