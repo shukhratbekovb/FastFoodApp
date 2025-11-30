@@ -25,9 +25,13 @@ export const DailyReportSheet = () => {
 		startTransition(async () => {
 			const response = await createReport({
 				body: {
-					totalOrders: report.totalOrders,
-					totalPrice: report.totalRevenue,
-					items: report.productSales,
+					total_orders: report.totalOrders,
+					total_price: report.totalRevenue,
+					items: report.productSales.map((item) => ({
+						name: item.productName,
+						quantity: item.totalQuantity,
+						price: item.totalRevenue,
+					})),
 				},
 			});
 

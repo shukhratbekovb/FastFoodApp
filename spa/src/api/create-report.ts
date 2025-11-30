@@ -1,5 +1,4 @@
 import { ENV } from "@/configs/env.config";
-import type { ProductSales } from "@/stores/cart.store";
 
 export const createReport = async ({ body }: Params) => {
 	try {
@@ -33,7 +32,11 @@ interface Params {
 }
 
 interface Request {
-	totalOrders: number;
-	totalPrice: number;
-	items: ProductSales[];
+	total_orders: number;
+	total_price: number;
+	items: {
+		name: string;
+		quantity: number;
+		price: number;
+	}[];
 }
