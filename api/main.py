@@ -1,4 +1,4 @@
-from escpos.printer import Network
+from escpos.printer import Network, Usb
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
