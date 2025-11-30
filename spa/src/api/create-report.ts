@@ -34,7 +34,7 @@ interface Params {
 interface Request {
 	total_orders: number;
 	total_price: number;
-	items: {
+	products: {
 		name: string;
 		quantity: number;
 		price: number;

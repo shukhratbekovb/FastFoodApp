@@ -27,7 +27,7 @@ export const DailyReportSheet = () => {
 				body: {
 					total_orders: report.totalOrders,
 					total_price: report.totalRevenue,
-					items: report.productSales.map((item) => ({
+					products: report.productSales.map((item) => ({
 						name: item.productName,
 						quantity: item.totalQuantity,
 						price: item.totalRevenue,
