@@ -11,80 +11,11 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { toMoney } from "@/lib/utils";
-import {
-	type CartItem,
-	type OrderType,
-	useCartStore,
-} from "@/stores/cart.store";
+import { type CartItem, useCartStore } from "@/stores/cart.store";
+import { OrderPrint } from "./order-print";
 import { Field, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
-
-const VirtualKeyboard = ({
-	onInput,
-	onClose,
-	onClear,
-	onBackspace,
-}: {
-	onInput: (value: string) => void;
-	onClose: () => void;
-	onClear: () => void;
-	onBackspace: () => void;
-}) => {
-	const numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-
-	const handleKeyPress = (key: string) => {
-		onInput(key);
-	};
-
-	return (
-		<div className="fixed bottom-0 left-0 right-3/5 bg-white border-t shadow-lg p-3 sm:p-4 z-50">
-			<div className="max-w-md mx-auto">
-				<div className="grid grid-cols-3 gap-2 mb-3">
-					{numbers.map((num) => (
-						<Button
-							key={num}
-							variant="outline"
-							className="h-12 sm:h-14 text-lg sm:text-xl font-medium"
-							onClick={() => handleKeyPress(num)}
-						>
-							{num}
-						</Button>
-					))}
-					<Button
-						variant="outline"
-						className="h-12 sm:h-14 text-lg sm:text-xl font-medium"
-						onClick={onBackspace}
-					>
-						⌫
-					</Button>
-					<Button
-						variant="outline"
-						className="h-12 sm:h-14 text-lg sm:text-xl font-medium"
-						onClick={() => handleKeyPress("00")}
-					>
-						00
-					</Button>
-				</div>
-
-				<div className="grid grid-cols-2 gap-2">
-					<Button
-						variant="outline"
-						className="h-12 sm:h-14 text-sm sm:text-base"
-						onClick={onClear}
-					>
-						Очистить
-					</Button>
-					<Button
-						className="h-12 sm:h-14 text-sm sm:text-base bg-green-600 hover:bg-green-700"
-						onClick={onClose}
-					>
-						Готово
-					</Button>
-				</div>
-			</div>
-		</div>
-	);
-};
+import { VirtualKeyboard } from "./virtual-keyboard";
 
 export const OrderSheet = () => {
 	const cart = useCartStore((state) => state.cart);
@@ -98,7 +29,7 @@ export const OrderSheet = () => {
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [tempPrices, setTempPrices] = useState<Record<string, string>>({});
 	const [pending, startTransition] = useTransition();
-	const [isCreatingAndPrinting, setIsCreatingAndPrinting] = useState(false); // Для кнопки "Создать заказ"
+	const [isCreatingAndPrinting, setIsCreatingAndPrinting] = useState(false);
 
 	const [showKeyboard, setShowKeyboard] = useState(false);
 	const [activeInput, setActiveInput] = useState<{
@@ -126,7 +57,7 @@ export const OrderSheet = () => {
 	}, [cart]);
 
 	const handleInputFocus = (type: "price" | "total", itemId?: string) => {
-		if (window.innerWidth < 1028) {
+		if (window.innerWidth < 1536) {
 			setActiveInput({ type, itemId });
 			setShowKeyboard(true);
 
@@ -176,16 +107,15 @@ export const OrderSheet = () => {
 		currentTotalRef.current = "";
 	};
 
-	// 🚀 ОБНОВЛЕННАЯ ФУНКЦИЯ СОЗДАНИЯ И ПЕЧАТИ ЗАКАЗА
 	const handleCreateOrder = () => {
 		if (cart.length === 0) return;
 
 		const finalTotal = customTotal !== 0 ? customTotal : undefined;
-		const newOrder = createOrder(finalTotal); // Создаем заказ и получаем его
+		const newOrder = createOrder(finalTotal);
 
-		if (!newOrder) return; // На всякий случай, если корзина была пуста
+		if (!newOrder) return;
 
-		setCustomTotal(0); // Сбрасываем кастомную сумму
+		setCustomTotal(0);
 
 		startTransition(async () => {
 			setIsCreatingAndPrinting(true);
@@ -195,7 +125,6 @@ export const OrderSheet = () => {
 					order_id: newOrder.orderId,
 					products: newOrder.items.map((item) => ({
 						name: item.name,
-						// Используем фактическую цену, сохраненную в заказе
 						price: item.newPrice ?? item.price,
 						quantity: item.quantity,
 					})),
@@ -211,9 +140,6 @@ export const OrderSheet = () => {
 				);
 				return;
 			}
-
-			// alert(`Заказ #${newOrder.orderId} успешно создан и отправлен на печать.`);
-			// setIsSheetOpen(false); // Закрыть, если нужно
 		});
 	};
 
@@ -257,29 +183,6 @@ export const OrderSheet = () => {
 
 	const handleResetTotal = () => {
 		setCustomTotal(0);
-	};
-
-	const handlePrintOrder = (order: OrderType) => {
-		startTransition(async () => {
-			const response = await createOrderPrint({
-				body: {
-					order_id: order.orderId,
-					products: order.items.map((item) => ({
-						name: item.name,
-						price: item.newPrice ?? item.price, // Используем цену, сохраненную в item
-						quantity: item.quantity,
-					})),
-					total: order.totalPrice || order.originalTotal || 0,
-				},
-			});
-
-			if (!response.status) {
-				alert(response.message);
-				return;
-			}
-
-			// setIsSheetOpen(false); // Необязательно
-		});
 	};
 
 	return (
@@ -532,21 +435,9 @@ export const OrderSheet = () => {
 									<div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-2 sm:gap-3 pt-1 sm:pt-2 border-t">
 										<div className="font-semibold text-sm sm:text-base">
 											Итого: {toMoney(orderTotal)}
-											{order.totalPrice !== undefined && (
-												<span className="text-green-600 text-xs sm:text-sm ml-1 sm:ml-2">
-													(изменено)
-												</span>
-											)}
 										</div>
-										<Button
-											size="sm"
-											className="text-xs sm:text-sm py-1 sm:py-1.5 h-8 sm:h-9"
-											onClick={() => handlePrintOrder(order)}
-											variant="outline"
-											disabled={pending}
-										>
-											{pending ? "Загрузка..." : "Печать"}
-										</Button>
+
+										<OrderPrint order={order} />
 									</div>
 								</div>
 							);
