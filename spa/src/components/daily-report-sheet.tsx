@@ -38,7 +38,6 @@ export const DailyReportSheet = () => {
 			if (!response.status) {
 				console.error(response.message);
 			}
-			clearAllData();
 			setOpen(false);
 		});
 	};
