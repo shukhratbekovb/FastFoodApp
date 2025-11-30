@@ -8,6 +8,12 @@ export const useCartStore = create<CartStoreType>()(
 			cart: [],
 			orders: [],
 			lastOrderId: 0,
+			dailyReport: {
+				totalOrders: 0,
+				totalRevenue: 0,
+				startDate: new Date().toISOString().split("T")[0] as string,
+				orders: [],
+			},
 
 			addItem: (product, selectedTag = null) =>
 				set((state) => {
@@ -85,31 +91,53 @@ export const useCartStore = create<CartStoreType>()(
 
 				if (state.cart.length === 0) return null;
 
-				// 💡 ЛОГИКА ОБНОВЛЕНИЯ lastOrderId:
-				// Если lastOrderId достиг 999, то новый ID будет 1. Иначе — lastOrderId + 1.
 				const nextOrderId =
 					state.lastOrderId >= 999 ? 1 : state.lastOrderId + 1;
 				const newOrderId = nextOrderId;
 
+				const calculatedTotal = state.cart.reduce((sum, item) => {
+					const itemPrice =
+						item.newPrice !== undefined ? item.newPrice : item.price;
+					return sum + itemPrice * item.quantity;
+				}, 0);
+
+				const finalTotal =
+					totalPrice !== undefined ? totalPrice : calculatedTotal;
+
 				const newOrder: OrderType = {
 					orderId: newOrderId,
 					items: state.cart,
-					totalPrice: totalPrice,
-					originalTotal: state.cart.reduce((sum, item) => {
-						const itemPrice =
-							item.newPrice !== undefined ? item.newPrice : item.price;
-						return sum + itemPrice * item.quantity;
-					}, 0),
+					totalPrice: finalTotal,
+					originalTotal: calculatedTotal,
 					createdAt: new Date().toISOString(),
 				};
 
-				set((state) => ({
+				const today = new Date().toISOString().split("T")[0] as string;
+				const currentReport = state.dailyReport;
+
+				const updatedReport =
+					currentReport.startDate === today
+						? currentReport
+						: {
+								totalOrders: 0,
+								totalRevenue: 0,
+								startDate: today,
+								orders: [],
+							};
+
+				set({
 					orders: [newOrder, ...state.orders].sort(
 						(a, b) => b.orderId - a.orderId,
 					),
 					cart: [],
-					lastOrderId: newOrderId, // Сохраняем новый ID
-				}));
+					lastOrderId: newOrderId,
+					dailyReport: {
+						...updatedReport,
+						totalOrders: updatedReport.totalOrders + 1,
+						totalRevenue: updatedReport.totalRevenue + finalTotal,
+						orders: [newOrder, ...updatedReport.orders],
+					},
+				});
 
 				return newOrder;
 			},
@@ -120,13 +148,78 @@ export const useCartStore = create<CartStoreType>()(
 						o.orderId === orderId ? { ...o, status: "completed" } : o,
 					),
 				})),
+
+			getDailyReport: () => {
+				const state = get();
+				const productSalesMap = new Map<number, ProductSales>();
+
+				state.dailyReport.orders.forEach((order) => {
+					order.items.forEach((item) => {
+						const finalPrice =
+							item.newPrice !== undefined ? item.newPrice : item.price;
+						const revenue = finalPrice * item.quantity;
+
+						if (!productSalesMap.has(item.productId)) {
+							productSalesMap.set(item.productId, {
+								productId: item.productId,
+								productName: item.name.split(" (")[0] as string,
+								totalQuantity: 0,
+								totalRevenue: 0,
+							});
+						}
+
+						// biome-ignore lint/style/noNonNullAssertion: <explanation>
+						const productStats = productSalesMap.get(item.productId)!;
+						productStats.totalQuantity += item.quantity;
+						productStats.totalRevenue += revenue;
+					});
+				});
+
+				const productSales = Array.from(productSalesMap.values()).sort(
+					(a, b) => b.totalRevenue - a.totalRevenue,
+				);
+
+				return {
+					totalOrders: state.dailyReport.totalOrders,
+					totalRevenue: state.dailyReport.totalRevenue,
+					startDate: state.dailyReport.startDate,
+					productSales,
+				};
+			},
+
+			clearDailyReport: () => {
+				const today = new Date().toISOString().split("T")[0] as string;
+				set({
+					dailyReport: {
+						totalOrders: 0,
+						totalRevenue: 0,
+						startDate: today,
+						orders: [],
+					},
+				});
+			},
+
+			clearAllData: () => {
+				const today = new Date().toISOString().split("T")[0] as string;
+				set({
+					orders: [],
+					lastOrderId: 0,
+					dailyReport: {
+						totalOrders: 0,
+						totalRevenue: 0,
+						startDate: today,
+						orders: [],
+					},
+				});
+			},
 		}),
 		{
 			name: "cart-storage",
-			storage: createJSONStorage(() => sessionStorage),
+			storage: createJSONStorage(() => localStorage),
 			partialize: (state) => ({
 				orders: state.orders,
 				lastOrderId: state.lastOrderId,
+				dailyReport: state.dailyReport,
 			}),
 		},
 	),
@@ -160,17 +253,38 @@ export interface OrderType {
 	createdAt?: string;
 }
 
+export interface ProductSales {
+	productId: number;
+	productName: string;
+	totalQuantity: number;
+	totalRevenue: number;
+}
+
 export interface CartStoreType {
 	cart: CartItem[];
 	orders: OrderType[];
 	lastOrderId: number;
+	dailyReport: {
+		totalOrders: number;
+		totalRevenue: number;
+		startDate: string;
+		orders: OrderType[];
+	};
 
 	addItem: (product: ProductType, selectedTag?: ProductTag | null) => void;
 	removeItem: (id: string) => void;
 	setQuantity: (id: string, quantity: number) => void;
 	setPrice: (id: string, newPrice: number) => void;
 	clearCart: () => void;
-
 	createOrder: (totalPrice?: number) => OrderType | null;
 	completeOrder: (orderId: number) => void;
+
+	getDailyReport: () => {
+		totalOrders: number;
+		totalRevenue: number;
+		startDate: string;
+		productSales: ProductSales[];
+	};
+	clearDailyReport: () => void;
+	clearAllData: () => void;
 }

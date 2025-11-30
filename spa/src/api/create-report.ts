@@ -1,8 +1,9 @@
 import { ENV } from "@/configs/env.config";
+import type { ProductSales } from "@/stores/cart.store";
 
-export const createOrderPrint = async ({ body }: Params) => {
+export const createReport = async ({ body }: Params) => {
 	try {
-		const response = await fetch(`${ENV.API}/print/`, {
+		const response = await fetch(`${ENV.API}/print/report/`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -32,13 +33,7 @@ interface Params {
 }
 
 interface Request {
-	products: Product[];
-	total: number;
-	order_id: number;
-}
-
-export interface Product {
-	name: string;
-	price: number;
-	quantity: number;
+	totalOrders: number;
+	totalPrice: number;
+	items: ProductSales[];
 }

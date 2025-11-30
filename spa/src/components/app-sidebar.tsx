@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { RoutersConfig } from "@/configs/routers.config";
 import { categoriesData } from "@/defaults/categories.data";
+import { DailyReportSheet } from "./daily-report-sheet.tsx";
 import { OrderSheet } from "./order-sheet";
 
 const data = {
@@ -46,6 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<NavProjects projects={[...data.projects]} />
 			</SidebarContent>
 			<SidebarFooter>
+				<DailyReportSheet />
 				<NavUser />
 			</SidebarFooter>
 		</Sidebar>
