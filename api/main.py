@@ -27,7 +27,7 @@ async def print_check(
 ):
     p = Network(IP, timeout=10)
     print_receipt(p, request, "client")
-    print_receipt(p, request, "kitchen")
+    print_receipt(p, request, "client")
     p.close()
 
 @app.post("/print/report")
