@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/sheet";
 import { toMoney } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart.store";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 export const DailyReportSheet = () => {
 	const [open, setOpen] = useState(false);
-	const { getDailyReport, clearAllData } = useCartStore(); // Используем clearAllData вместо clearDailyReport
+	const { getDailyReport, clearAllData } = useCartStore();
 	const [pending, startTransition] = useTransition();
 	const report = getDailyReport();
 
@@ -43,14 +44,12 @@ export const DailyReportSheet = () => {
 	};
 
 	const handleCloseReport = () => {
-		// Сначала печатаем отчет
 		handlePrint();
 
-		// Затем очищаем ВСЕ данные и закрываем sheet
 		setTimeout(() => {
-			clearAllData(); // Используем clearAllData вместо clearDailyReport
+			clearAllData();
 			setOpen(false);
-		}, 1000); // Увеличиваем время для гарантии завершения печати
+		}, 1000);
 	};
 
 	return (
@@ -71,7 +70,6 @@ export const DailyReportSheet = () => {
 				</SheetHeader>
 
 				<div className="mt-6 space-y-4 px-4">
-					{/* Статистика */}
 					<div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
 						<div className="text-center">
 							<div className="text-2xl font-bold text-blue-600">
@@ -94,28 +92,28 @@ export const DailyReportSheet = () => {
 								<h3 className="font-semibold">Проданные продукты</h3>
 							</div>
 							<div className="max-h-64 overflow-y-auto">
-								<table className="w-full text-sm">
-									<thead className="bg-gray-50">
-										<tr>
-											<th className="text-left p-2 font-medium">Продукт</th>
-											<th className="text-center p-2 font-medium">Кол-во</th>
-											<th className="text-right p-2 font-medium">Сумма</th>
-										</tr>
-									</thead>
-									<tbody>
+								<Table className="w-full text-sm">
+									<TableHeader className="bg-gray-50">
+										<TableRow>
+											<TableHead className="text-left font-medium">Продукт</TableHead>
+											<TableHead className="text-center font-medium">Кол-во</TableHead>
+											<TableHead className="text-right font-medium">Сумма</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
 										{report.productSales.map((product) => (
-											<tr key={product.productId} className="border-b">
-												<td className="p-2">{product.productName}</td>
-												<td className="p-2 text-center">
+											<TableRow key={product.productId} className="border-b">
+												<TableCell>{product.productName}</TableCell>
+												<TableCell className="text-center">
 													{product.totalQuantity}
-												</td>
-												<td className="p-2 text-right">
+												</TableCell>
+												<TableCell className="text-right">
 													{toMoney(product.totalRevenue)}
-												</td>
-											</tr>
+												</TableCell>
+											</TableRow>
 										))}
-									</tbody>
-								</table>
+									</TableBody>
+								</Table>
 							</div>
 						</div>
 					) : (
@@ -125,7 +123,6 @@ export const DailyReportSheet = () => {
 						</div>
 					)}
 
-					{/* Кнопки действий */}
 					<div className="flex gap-2 pt-4">
 						<Button
 							onClick={handlePrint}

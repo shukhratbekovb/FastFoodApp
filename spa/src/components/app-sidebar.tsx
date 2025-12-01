@@ -48,7 +48,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarContent>
 			<SidebarFooter>
 				<DailyReportSheet />
-				<NavUser />
 			</SidebarFooter>
 		</Sidebar>
 	);

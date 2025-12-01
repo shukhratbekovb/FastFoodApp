@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { createOrderPrint } from "@/api/create-order";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,9 +28,8 @@ export const OrderSheet = () => {
 	const [customTotal, setCustomTotal] = useState(0);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [tempPrices, setTempPrices] = useState<Record<string, string>>({});
-	const [pending, startTransition] = useTransition();
 	const [isCreatingAndPrinting, setIsCreatingAndPrinting] = useState(false);
-
+	const cancelOrder = useCartStore((state) => state.cancelOrder);
 	const [showKeyboard, setShowKeyboard] = useState(false);
 	const [activeInput, setActiveInput] = useState<{
 		type: "price" | "total";
@@ -389,10 +388,10 @@ export const OrderSheet = () => {
 								order.totalPrice !== undefined
 									? order.totalPrice
 									: order.items.reduce((sum, i) => {
-											const itemPrice =
-												i.newPrice !== undefined ? i.newPrice : i.price;
-											return sum + itemPrice * i.quantity;
-										}, 0);
+										const itemPrice =
+											i.newPrice !== undefined ? i.newPrice : i.price;
+										return sum + itemPrice * i.quantity;
+									}, 0);
 
 							return (
 								<div
@@ -434,10 +433,16 @@ export const OrderSheet = () => {
 
 									<div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-2 sm:gap-3 pt-1 sm:pt-2 border-t">
 										<div className="font-semibold text-sm sm:text-base">
-											Итого: {toMoney(orderTotal)}
+											Итого: {toMoney(orderTotal)} {order.status === "cancelled" && <span className="text-red-500">Отменен</span>}
 										</div>
 
-										<OrderPrint order={order} />
+										<div className="flex gap-5">
+											<OrderPrint order={order} />
+
+											{order.status !== "cancelled" && <Button variant={"destructive"} onClick={() => cancelOrder(order.orderId)}>
+												Отменить
+											</Button>}
+										</div>
 									</div>
 								</div>
 							);

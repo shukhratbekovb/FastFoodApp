@@ -119,11 +119,11 @@ export const useCartStore = create<CartStoreType>()(
 					currentReport.startDate === today
 						? currentReport
 						: {
-								totalOrders: 0,
-								totalRevenue: 0,
-								startDate: today,
-								orders: [],
-							};
+							totalOrders: 0,
+							totalRevenue: 0,
+							startDate: today,
+							orders: [],
+						};
 
 				set({
 					orders: [newOrder, ...state.orders].sort(
@@ -149,9 +149,46 @@ export const useCartStore = create<CartStoreType>()(
 					),
 				})),
 
+			cancelOrder(orderId) {
+				set((state) => {
+					const orderToCancel = state.orders.find((o) => o.orderId === orderId);
+
+					if (!orderToCancel) return state;
+
+					const orderTotal = orderToCancel.totalPrice ||
+						orderToCancel.items.reduce((sum, item) => {
+							const itemPrice = item.newPrice ?? item.price;
+							return sum + itemPrice * item.quantity;
+						}, 0);
+
+					const today = new Date().toISOString().split("T")[0] as string;
+					const currentReport = state.dailyReport;
+
+					if (currentReport.startDate === today) {
+						return {
+							orders: state.orders.map((o) =>
+								o.orderId === orderId ? { ...o, status: "cancelled" } : o,
+							),
+							dailyReport: {
+								...currentReport,
+								totalOrders: Math.max(0, currentReport.totalOrders - 1),
+								totalRevenue: Math.max(0, currentReport.totalRevenue - orderTotal),
+								orders: currentReport.orders.filter(o => o.orderId !== orderId),
+							},
+						};
+					}
+
+					return {
+						orders: state.orders.map((o) =>
+							o.orderId === orderId ? { ...o, status: "cancelled" } : o,
+						),
+					};
+				});
+			},
+
 			getDailyReport: () => {
 				const state = get();
-				const productSalesMap = new Map<number, ProductSales>();
+				const productSalesMap = new Map<string, ProductSales>();
 
 				state.dailyReport.orders.forEach((order) => {
 					order.items.forEach((item) => {
@@ -159,17 +196,18 @@ export const useCartStore = create<CartStoreType>()(
 							item.newPrice !== undefined ? item.newPrice : item.price;
 						const revenue = finalPrice * item.quantity;
 
-						if (!productSalesMap.has(item.productId)) {
-							productSalesMap.set(item.productId, {
+						const productKey = `${item.productId}-${item.id}`;
+
+						if (!productSalesMap.has(productKey)) {
+							productSalesMap.set(productKey, {
 								productId: item.productId,
-								productName: item.name.split(" (")[0] as string,
+								productName: item.originalProduct?.name || item.name.split(" (")[0] as string,
 								totalQuantity: 0,
 								totalRevenue: 0,
 							});
 						}
 
-						// biome-ignore lint/style/noNonNullAssertion: <explanation>
-						const productStats = productSalesMap.get(item.productId)!;
+						const productStats = productSalesMap.get(productKey)!;
 						productStats.totalQuantity += item.quantity;
 						productStats.totalRevenue += revenue;
 					});
@@ -249,7 +287,7 @@ export interface OrderType {
 	items: CartItem[];
 	totalPrice?: number;
 	originalTotal?: number;
-	status?: "pending" | "completed";
+	status?: "pending" | "completed" | "cancelled";
 	createdAt?: string;
 }
 
@@ -287,4 +325,5 @@ export interface CartStoreType {
 	};
 	clearDailyReport: () => void;
 	clearAllData: () => void;
+	cancelOrder: (orderId: number) => void;
 }
